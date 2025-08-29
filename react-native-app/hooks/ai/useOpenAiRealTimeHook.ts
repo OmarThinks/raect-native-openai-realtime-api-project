@@ -186,22 +186,28 @@ const useOpenAiRealTime = ({
     }
   }, [instructions, isWebSocketConnected]);
 
-  const sendMessage = useCallback(
-    (messageObject: { [key: string]: any }) => {
-      if (
-        webSocketRef.current &&
-        webSocketRef.current.readyState === WebSocket.OPEN &&
-        isWebSocketConnected &&
-        isInitialized
-      ) {
-        webSocketRef.current.send(JSON.stringify(messageObject));
-      }
-    },
-    [isInitialized, isWebSocketConnected]
-  );
+  const sendMessage = useCallback((messageObject: { [key: string]: any }) => {
+    if (
+      webSocketRef.current &&
+      webSocketRef.current.readyState === WebSocket.OPEN
+      //isWebSocketConnected &&
+      //isInitialized
+    ) {
+      console.log("Yes, sending message");
+      webSocketRef.current.send(JSON.stringify(messageObject));
+    }
+  }, []);
 
   const sendBase64AudioStringChunk = useCallback(
     (base64String: string) => {
+      console.log(
+        "Should I send message?",
+        !!webSocketRef.current,
+        isWebSocketConnectedRef.current,
+        !isWebSocketConnectingRef.current,
+        isInitializedRef.current,
+        !isAiResponseInProgressRef.current
+      );
       if (
         webSocketRef.current &&
         isWebSocketConnectedRef.current &&
@@ -209,6 +215,7 @@ const useOpenAiRealTime = ({
         isInitializedRef.current &&
         !isAiResponseInProgressRef.current
       ) {
+        console.log("sending message", [...base64String].slice(0, 50));
         sendMessage({
           type: "input_audio_buffer.append",
           audio: base64String,

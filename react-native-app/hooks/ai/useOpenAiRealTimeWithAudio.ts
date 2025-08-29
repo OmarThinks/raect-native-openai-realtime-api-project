@@ -1,5 +1,5 @@
 import { dummyBase64Audio16k } from "@/samples/dummyBase64Audio";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { AudioBuffer, AudioContext } from "react-native-audio-api";
 import { useAudioBufferQueue } from "../audio/useAudioBufferQueue";
@@ -9,6 +9,8 @@ import { useOpenAiRealTime } from "./useOpenAiRealTimeHook";
 const useOpenAiRealTimeWithAudio = () => {
   const { enqueueAudioBufferQueue, isAudioPlaying, stopPlayingAudio } =
     useAudioBufferQueue({ sampleRate: 24000 });
+
+  const [messages, setMessages] = useState<object[]>([]);
 
   const onSocketError = useCallback(() => {
     Alert.alert("Connection Error");
@@ -28,6 +30,10 @@ const useOpenAiRealTimeWithAudio = () => {
   const isAiResponseInProgressRef = useRef(false);
   const isAudioPlayingRef = useRef(false);
 
+  const onMessageReceived = useCallback((newMessage: object) => {
+    setMessages((prev) => [...prev, newMessage]);
+  }, []);
+
   const {
     connectWebSocket,
     disconnectSocket,
@@ -41,11 +47,13 @@ const useOpenAiRealTimeWithAudio = () => {
     instructions: "You are a helpful assistant.",
     onSocketError,
     onAudioChunk,
+    onMessageReceived,
   });
 
   const onAudioReady = useCallback(
     (audioBuffer: AudioBuffer) => {
       {
+        return;
         if (!isAiResponseInProgressRef.current && !isAudioPlayingRef.current) {
           const float32Array = audioBuffer.buffer.getChannelData(0);
 
@@ -121,6 +129,10 @@ const useOpenAiRealTimeWithAudio = () => {
     sendBase64AudioStringChunk(dummyBase64Audio16k);
   }, [sendBase64AudioStringChunk]);
 
+  const logMessages = useCallback(() => {
+    console.log(messages);
+  }, [messages]);
+
   return {
     connect,
     disconnect: resetState,
@@ -131,6 +143,7 @@ const useOpenAiRealTimeWithAudio = () => {
     isAiResponding: isAiResponseInProgress,
     transcription,
     ping,
+    logMessages,
   };
 };
 
