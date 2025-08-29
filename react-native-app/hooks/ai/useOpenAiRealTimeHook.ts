@@ -11,12 +11,12 @@ const useOpenAiRealTime = ({
   onSocketError,
 }: {
   instructions: string;
-  onMessageReceived: (message: object) => void;
-  onAudioResponseComplete: (base64Audio: string) => void;
-  onUsageReport: (usage: object) => void;
-  onReadyToReceiveAudio: () => void;
-  onSocketClose: () => void;
-  onSocketError?: (error: any) => void;
+  onMessageReceived?: (message: object) => void;
+  onAudioResponseComplete?: (base64Audio: string) => void;
+  onUsageReport?: (usage: object) => void;
+  onReadyToReceiveAudio?: () => void;
+  onSocketClose?: (event: CloseEvent) => void;
+  onSocketError?: (error: Event) => void;
 }) => {
   const webSocketRef = useRef<null | WebSocket>(null);
   const [isWebSocketConnecting, setIsWebSocketConnecting] = useState(false);
@@ -57,11 +57,11 @@ const useOpenAiRealTime = ({
           setIsWebSocketConnected(true);
         });
 
-        ws.addEventListener("close", () => {
+        ws.addEventListener("close", (event) => {
           console.log("Disconnected from server.");
           setIsWebSocketConnected(false);
           resetHookState();
-          onSocketClose();
+          onSocketClose?.(event);
         });
 
         ws.addEventListener("error", (error) => {
@@ -74,7 +74,7 @@ const useOpenAiRealTime = ({
           // convert message to an object
 
           const messageObject = JSON.parse(event.data);
-          onMessageReceived(messageObject);
+          onMessageReceived?.(messageObject);
           if (messageObject.type === "response.created") {
             setIsAiResponseInProgress(true);
             setTranscription("");
@@ -85,7 +85,7 @@ const useOpenAiRealTime = ({
               responseQueueRef.current
             );
             responseQueueRef.current = [];
-            onAudioResponseComplete(combinedBase64);
+            onAudioResponseComplete?.(combinedBase64);
           }
           if (messageObject.type === "response.audio.delta") {
             const audioChunk = messageObject.delta;
@@ -94,11 +94,11 @@ const useOpenAiRealTime = ({
             }
           }
           if (messageObject?.response?.usage) {
-            onUsageReport(messageObject.response.usage);
+            onUsageReport?.(messageObject.response.usage);
           }
           if (messageObject.type === "session.updated") {
             setIsInitialized(true);
-            onReadyToReceiveAudio();
+            onReadyToReceiveAudio?.();
           }
           if (messageObject.type === "response.audio_transcript.delta") {
             setTranscription((prev) => prev + messageObject.delta);
