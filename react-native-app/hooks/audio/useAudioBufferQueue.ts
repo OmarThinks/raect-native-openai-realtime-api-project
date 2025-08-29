@@ -54,13 +54,19 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     }
   }, [resetState, updateIsAudioPlaying]);
 
-  const enqueueAudioBufferQueue = useCallback((audioBuffer: AudioBuffer) => {
-    const bufferId = audioBufferQueueRef.current?.enqueueBuffer(audioBuffer);
-    console.log("enqueuedBufferId", bufferId);
-    if (bufferId) {
-      lastBufferIdRef.current = bufferId;
-    }
-  }, []);
+  const enqueueAudioBufferQueue = useCallback(
+    (audioBuffer: AudioBuffer) => {
+      const bufferId = audioBufferQueueRef.current?.enqueueBuffer(audioBuffer);
+      console.log("enqueuedBufferId", bufferId);
+      if (bufferId) {
+        lastBufferIdRef.current = bufferId;
+      }
+      if (!isAudioPlayingRef.current) {
+        playAudio();
+      }
+    },
+    [playAudio]
+  );
 
   return {
     isAudioPlaying,
