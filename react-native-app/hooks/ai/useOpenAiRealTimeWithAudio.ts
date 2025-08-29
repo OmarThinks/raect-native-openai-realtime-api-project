@@ -47,7 +47,6 @@ const useOpenAiRealTimeWithAudio = () => {
 
   const onAudioReady = useCallback(
     (audioBuffer: AudioBuffer) => {
-      // Conditions: isWebSocketConnected, !isAiResponseInProgress, isInitialized, !isAudioPlaying
       {
         if (
           isWebSocketConnectedRef.current &&

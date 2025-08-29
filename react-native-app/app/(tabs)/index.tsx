@@ -1,11 +1,34 @@
-import { Text, View } from "react-native";
+import useOpenAiRealTimeWithAudio from "@/hooks/ai/useOpenAiRealTimeWithAudio";
+import { Button, Text, View } from "react-native";
 
 function HomeScreen() {
+  const {
+    connect,
+    disconnect,
+    isAiResponding,
+    isConnected,
+    isConnecting,
+    isListening,
+    isStreamingAudio,
+    transcription,
+  } = useOpenAiRealTimeWithAudio();
+
   return (
-    <View className="flex-1 items-center justify-center bg-white p-4">
-      <Text className="text-xl font-bold text-blue-500">
-        Welcome to Nativewind!
-      </Text>
+    <View className="flex-1 items-stretch justify-center bg-white p-4">
+      {isConnecting ? (
+        <Text>Connecting...</Text>
+      ) : (
+        <Button
+          title={isConnected ? "Disconnect" : "Connect"}
+          onPress={isConnected ? disconnect : connect}
+        />
+      )}
+
+      <Text>Is Listening: {`${isListening}`}</Text>
+
+      <Text>Is Microphone Active: {`${isStreamingAudio}`}</Text>
+
+      <Text> Transcription: {transcription}</Text>
     </View>
   );
 }
