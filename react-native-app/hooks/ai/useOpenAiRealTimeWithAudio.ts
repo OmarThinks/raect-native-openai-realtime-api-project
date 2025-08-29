@@ -144,6 +144,7 @@ const useOpenAiRealTimeWithAudio = () => {
     transcription,
     ping,
     logMessages,
+    isAudioPlaying,
   };
 };
 

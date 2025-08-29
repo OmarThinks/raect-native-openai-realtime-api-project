@@ -17,6 +17,7 @@ function HomeScreen() {
     transcription,
     ping,
     logMessages,
+    isAudioPlaying,
   } = useOpenAiRealTimeWithAudio();
 
   const _connect = useCallback(async () => {
@@ -54,6 +55,9 @@ function HomeScreen() {
       <Text>Is Listening: {`${isListening}`}</Text>
 
       <Text>Is Microphone Active: {`${isStreamingAudio}`}</Text>
+
+      <Text>isAiResponding: {`${isAiResponding}`}</Text>
+      <Text>isAudioPlaying: {`${isAudioPlaying}`}</Text>
 
       <Text> Transcription: {transcription}</Text>
 
