@@ -67,6 +67,7 @@ const useOpenAiRealTime = ({
 
   const connectWebSocket = useCallback(
     async ({ ephemeralKey }: { ephemeralKey: string }) => {
+      console.log("I should connect web socket");
       updateIsWebSocketConnecting(true);
       if (webSocketRef.current) {
         return;
@@ -74,6 +75,8 @@ const useOpenAiRealTime = ({
 
       try {
         const url = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17&token=${ephemeralKey}`;
+
+        console.log("url", url);
 
         const ws = new WebSocket(url, [
           "realtime",
@@ -87,7 +90,7 @@ const useOpenAiRealTime = ({
         });
 
         ws.addEventListener("close", (event) => {
-          console.log("Disconnected from server.");
+          console.log("Disconnected from server.", event);
           updateIsWebSocketConnected(false);
           resetHookState();
           onSocketClose?.(event);

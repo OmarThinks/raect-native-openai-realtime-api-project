@@ -3,6 +3,8 @@ import { requestRecordingPermissionsAsync } from "expo-audio";
 import { useCallback } from "react";
 import { Alert, Button, Text, View } from "react-native";
 
+const locaIpAddress = "http://192.168.8.103";
+
 function HomeScreen() {
   const {
     connect,
@@ -19,11 +21,16 @@ function HomeScreen() {
   const _connect = useCallback(async () => {
     try {
       const { granted } = await requestRecordingPermissionsAsync();
+      console.log("granted", granted);
+
       if (granted) {
-        const tokenResponse = await fetch("http://localhost:3000/session");
+        console.log("getting backend response");
+        const tokenResponse = await fetch(`${locaIpAddress}:3000/session`);
+        console.log("tokenResponse", tokenResponse);
         const data = await tokenResponse.json();
         const EPHEMERAL_KEY = data.client_secret.value;
-        connect(EPHEMERAL_KEY);
+        console.log("token", EPHEMERAL_KEY);
+        connect({ ephemeralToken: EPHEMERAL_KEY });
       } else {
       }
     } catch (error) {

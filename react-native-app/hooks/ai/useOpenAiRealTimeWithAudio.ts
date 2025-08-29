@@ -109,6 +109,14 @@ const useOpenAiRealTimeWithAudio = () => {
     !isAiResponseInProgress &&
     !isAudioPlaying;
 
+  console.log(
+    "isConnected",
+    isWebSocketConnected,
+    isWebSocketConnecting,
+    isInitialized,
+    isRecording
+  );
+
   const ping = useCallback(() => {
     sendBase64AudioStringChunk(dummyBase64Audio16k);
   }, [sendBase64AudioStringChunk]);
