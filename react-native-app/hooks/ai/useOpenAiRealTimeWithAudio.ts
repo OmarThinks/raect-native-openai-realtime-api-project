@@ -1,10 +1,10 @@
+import { dummyBase64Audio16k } from "@/samples/dummyBase64Audio";
 import { useCallback, useEffect, useRef } from "react";
 import { Alert } from "react-native";
 import { AudioBuffer, AudioContext } from "react-native-audio-api";
 import { useAudioBufferQueue } from "../audio/useAudioBufferQueue";
 import { useAudioStreamer } from "../audio/useAudioStreamer";
 import { useOpenAiRealTime } from "./useOpenAiRealTimeHook";
-import { requestRecordingPermissionsAsync } from "expo-audio";
 
 const useOpenAiRealTimeWithAudio = () => {
   const { enqueueAudioBufferQueue, isAudioPlaying, stopPlayingAudio } =
@@ -25,9 +25,7 @@ const useOpenAiRealTimeWithAudio = () => {
     [enqueueAudioBufferQueue]
   );
 
-  const isWebSocketConnectedRef = useRef(false);
   const isAiResponseInProgressRef = useRef(false);
-  const isInitializedRef = useRef(false);
   const isAudioPlayingRef = useRef(false);
 
   const {
@@ -48,12 +46,7 @@ const useOpenAiRealTimeWithAudio = () => {
   const onAudioReady = useCallback(
     (audioBuffer: AudioBuffer) => {
       {
-        if (
-          isWebSocketConnectedRef.current &&
-          !isAiResponseInProgressRef.current &&
-          isInitializedRef.current &&
-          !isAudioPlayingRef.current
-        ) {
+        if (!isAiResponseInProgressRef.current && !isAudioPlayingRef.current) {
           const float32Array = audioBuffer.buffer.getChannelData(0);
 
           const uint8Array = new Uint8Array(float32Array.buffer);
@@ -83,18 +76,12 @@ const useOpenAiRealTimeWithAudio = () => {
     stopPlayingAudio();
   }, [disconnectSocket, stopPlayingAudio, stopRecording]);
 
-  const connect = useCallback(async () => {
-    try {
-      const { granted } = await requestRecordingPermissionsAsync();
-
-      if (granted) {
-        const tokenResponse = await fetch("http://localhost:3000/session");
-        const data = await tokenResponse.json();
-        const EPHEMERAL_KEY = data.client_secret.value;
-        connectWebSocket({ ephemeralKey: EPHEMERAL_KEY });
-      }
-    } catch {}
-  }, [connectWebSocket]);
+  const connect = useCallback(
+    async ({ ephemeralToken }: { ephemeralToken: string }) => {
+      connectWebSocket({ ephemeralKey: ephemeralToken });
+    },
+    [connectWebSocket]
+  );
 
   useEffect(() => {
     if (isWebSocketConnected) {
@@ -106,12 +93,6 @@ const useOpenAiRealTimeWithAudio = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWebSocketConnected]);
 
-  useEffect(() => {
-    isInitializedRef.current = isInitialized;
-  }, [isInitialized]);
-  useEffect(() => {
-    isWebSocketConnectedRef.current = isWebSocketConnected;
-  }, [isWebSocketConnected]);
   useEffect(() => {
     isAiResponseInProgressRef.current = isAiResponseInProgress;
   }, [isAiResponseInProgress]);
@@ -128,6 +109,10 @@ const useOpenAiRealTimeWithAudio = () => {
     !isAiResponseInProgress &&
     !isAudioPlaying;
 
+  const ping = useCallback(() => {
+    sendBase64AudioStringChunk(dummyBase64Audio16k);
+  }, [sendBase64AudioStringChunk]);
+
   return {
     connect,
     disconnect: resetState,
@@ -137,6 +122,7 @@ const useOpenAiRealTimeWithAudio = () => {
     isStreamingAudio: isRecording,
     isAiResponding: isAiResponseInProgress,
     transcription,
+    ping,
   };
 };
 

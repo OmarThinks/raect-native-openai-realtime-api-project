@@ -51,4 +51,4 @@ const convert16Kto24K = (input: string): string => {
 
 const dummyBase64Audio24K = convert16Kto24K(dummyBase64Audio16k);
 
-export { dummyBase64Audio24K };
+export { dummyBase64Audio16k };
