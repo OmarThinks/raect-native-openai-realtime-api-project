@@ -9,6 +9,10 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferQueueRef = useRef<AudioBufferQueueSourceNode | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const isAudioPlayingRef = useRef(false);
+
+  const updateIsAudioPlaying = useCallback(() => {}, []);
+
   const lastBufferIdRef = useRef("");
 
   const resetState = useCallback(() => {

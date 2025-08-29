@@ -44,10 +44,24 @@ const useOpenAiRealTimeWithAudio = () => {
     onAudioChunk,
   });
 
-  const onAudioReady = useCallback((audioBuffer: AudioBuffer) => {
-    const audioContext = new AudioContext();
-    //audioBuffer.buffer.sendBase64AudioStringChunk();
-  }, []);
+  const onAudioReady = useCallback(
+    (audioBuffer: AudioBuffer) => {
+      // Get the audio data as Float32Array
+      const float32Array = audioBuffer.buffer.getChannelData(0);
+
+      // Convert Float32Array to base64
+      const uint8Array = new Uint8Array(float32Array.buffer);
+      let binary = "";
+      const chunkSize = 0x8000; // 32KB chunks to avoid call stack overflow
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+      }
+      const base64AudioData = btoa(binary);
+      sendBase64AudioStringChunk(base64AudioData);
+    },
+    [sendBase64AudioStringChunk]
+  );
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
     sampleRate: 16000,
@@ -61,21 +75,18 @@ const useOpenAiRealTimeWithAudio = () => {
     stopPlayingAudio();
   }, [disconnectSocket, stopPlayingAudio, stopRecording]);
 
-  const connect = useCallback(
-    async ({ ephemiralToken }: { ephemiralToken: string }) => {
-      try {
-        const { granted } = await requestRecordingPermissionsAsync();
+  const connect = useCallback(async () => {
+    try {
+      const { granted } = await requestRecordingPermissionsAsync();
 
-        if (granted) {
-          const tokenResponse = await fetch("http://localhost:3000/session");
-          const data = await tokenResponse.json();
-          const EPHEMERAL_KEY = data.client_secret.value;
-          connectWebSocket({ ephemeralKey: EPHEMERAL_KEY });
-        }
-      } catch {}
-    },
-    [connectWebSocket]
-  );
+      if (granted) {
+        const tokenResponse = await fetch("http://localhost:3000/session");
+        const data = await tokenResponse.json();
+        const EPHEMERAL_KEY = data.client_secret.value;
+        connectWebSocket({ ephemeralKey: EPHEMERAL_KEY });
+      }
+    } catch {}
+  }, [connectWebSocket]);
 
   useEffect(() => {
     if (isWebSocketConnected) {
@@ -104,6 +115,7 @@ const useOpenAiRealTimeWithAudio = () => {
     isListening,
     isStreamingAudio: isRecording,
     isAiResponding: isAiResponseInProgress,
+    transcription,
   };
 };
 
