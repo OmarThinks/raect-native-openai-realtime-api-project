@@ -116,6 +116,7 @@ const useOpenAiRealTime = ({
       }
     },
     [
+      onAudioChunk,
       onAudioResponseComplete,
       onMessageReceived,
       onReadyToReceiveAudio,
