@@ -7,8 +7,12 @@ import { useAudioStreamer } from "../audio/useAudioStreamer";
 import { useOpenAiRealTime } from "./useOpenAiRealTimeHook";
 
 const useOpenAiRealTimeWithAudio = () => {
-  const { enqueueAudioBufferQueue, isAudioPlaying, stopPlayingAudio } =
-    useAudioBufferQueue({ sampleRate: 24000 });
+  const {
+    enqueueAudioBufferQueue,
+    isAudioPlaying,
+    stopPlayingAudio,
+    playAudio,
+  } = useAudioBufferQueue({ sampleRate: 24000 });
 
   const [messages, setMessages] = useState<object[]>([]);
 
@@ -130,7 +134,7 @@ const useOpenAiRealTimeWithAudio = () => {
   }, [sendBase64AudioStringChunk]);
 
   const logMessages = useCallback(() => {
-    console.log(messages);
+    console.log(JSON.stringify(messages));
   }, [messages]);
 
   return {
@@ -145,6 +149,7 @@ const useOpenAiRealTimeWithAudio = () => {
     ping,
     logMessages,
     isAudioPlaying,
+    playAudio,
   };
 };
 

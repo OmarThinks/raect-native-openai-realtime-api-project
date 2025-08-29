@@ -41,9 +41,10 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
   }, [resetState, sampleRate]);
 
   const playAudio = useCallback(() => {
-    if (audioBufferQueueRef.current) {
+    if (audioBufferQueueRef.current && lastBufferIdRef.current) {
       audioBufferQueueRef.current.start();
       updateIsAudioPlaying(true);
+      console.log("I should start palying audio now");
       audioBufferQueueRef.current.onEnded = (event) => {
         console.log("onEnded", event);
         const { bufferId } = event;
@@ -62,7 +63,7 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
         lastBufferIdRef.current = bufferId;
       }
       if (!isAudioPlayingRef.current) {
-        playAudio();
+        //playAudio();
       }
     },
     [playAudio]
@@ -72,6 +73,7 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     isAudioPlaying,
     enqueueAudioBufferQueue,
     stopPlayingAudio: resetState,
+    playAudio,
   };
 };
 

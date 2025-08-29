@@ -18,6 +18,7 @@ function HomeScreen() {
     ping,
     logMessages,
     isAudioPlaying,
+    playAudio,
   } = useOpenAiRealTimeWithAudio();
 
   const _connect = useCallback(async () => {
@@ -64,6 +65,7 @@ function HomeScreen() {
       {isListening && <Button title="Ping" onPress={ping} />}
 
       <Button title="Log messages" onPress={logMessages} />
+      <Button title="playAudio" onPress={playAudio} />
     </View>
   );
 }
