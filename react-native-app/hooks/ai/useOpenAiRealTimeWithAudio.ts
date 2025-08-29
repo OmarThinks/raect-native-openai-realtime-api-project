@@ -15,6 +15,7 @@ const useOpenAiRealTimeWithAudio = () => {
   } = useAudioBufferQueue({ sampleRate: 24000 });
 
   const [messages, setMessages] = useState<object[]>([]);
+  const [chuncks, setChunks] = useState<string[]>([]);
 
   const onSocketError = useCallback(() => {
     Alert.alert("Connection Error");
@@ -22,6 +23,8 @@ const useOpenAiRealTimeWithAudio = () => {
 
   const onAudioChunk = useCallback(
     async (audioText: string) => {
+      setChunks((prev) => [...prev, audioText]);
+      console.log("enqueing", [...audioText].slice(0, 10));
       const audioBuffer = await new AudioContext({
         sampleRate: 24000,
       }).decodePCMInBase64Data(audioText);
@@ -137,6 +140,10 @@ const useOpenAiRealTimeWithAudio = () => {
     console.log(JSON.stringify(messages));
   }, [messages]);
 
+  const logChunks = useCallback(() => {
+    console.log(chuncks);
+  }, [chuncks]);
+
   return {
     connect,
     disconnect: resetState,
@@ -150,6 +157,7 @@ const useOpenAiRealTimeWithAudio = () => {
     logMessages,
     isAudioPlaying,
     playAudio,
+    logChunks,
   };
 };
 

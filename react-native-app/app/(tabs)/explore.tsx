@@ -2,6 +2,8 @@ import { Button, View } from "react-native";
 import { dummyMessages } from "@/samples/dummyMessages";
 import { useAudioBufferQueue } from "@/hooks/audio/useAudioBufferQueue";
 import { AudioContext } from "react-native-audio-api";
+import { dummyAudioChunks } from "@/samples/dummyAudioChuncks";
+import { combineBase64ArrayList } from "@/hooks/ai/useOpenAiRealTimeHook";
 
 export default function TabTwoScreen() {
   const {
@@ -24,6 +26,21 @@ export default function TabTwoScreen() {
                 await audioContext.decodePCMInBase64Data(pcmText);
               enqueueAudioBufferQueue(audioBuffer);
             }
+          }
+
+          playAudio();
+        }}
+      />
+
+      <Button
+        title="Play dummy Chnucks"
+        onPress={async () => {
+          const audioContext = new AudioContext({ sampleRate: 24000 });
+
+          for (const chunck of dummyAudioChunks) {
+            const audioBuffer =
+              await audioContext.decodePCMInBase64Data(chunck);
+            enqueueAudioBufferQueue(audioBuffer);
           }
 
           playAudio();
