@@ -9,6 +9,7 @@ const useOpenAiRealTime = ({
   onReadyToReceiveAudio,
   onSocketClose,
   onSocketError,
+  onAudioChunk,
 }: {
   instructions: string;
   onMessageReceived?: (message: object) => void;
@@ -17,6 +18,7 @@ const useOpenAiRealTime = ({
   onReadyToReceiveAudio?: () => void;
   onSocketClose?: (event: CloseEvent) => void;
   onSocketError?: (error: Event) => void;
+  onAudioChunk?: (audioText: string) => void;
 }) => {
   const webSocketRef = useRef<null | WebSocket>(null);
   const [isWebSocketConnecting, setIsWebSocketConnecting] = useState(false);
@@ -88,9 +90,10 @@ const useOpenAiRealTime = ({
             onAudioResponseComplete?.(combinedBase64);
           }
           if (messageObject.type === "response.audio.delta") {
-            const audioChunk = messageObject.delta;
+            const audioChunk = messageObject.delta as string;
             if (audioChunk) {
               responseQueueRef.current.push(audioChunk);
+              onAudioChunk?.(audioChunk);
             }
           }
           if (messageObject?.response?.usage) {
