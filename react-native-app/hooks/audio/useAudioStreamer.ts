@@ -18,10 +18,10 @@ const useAudioStreamer = ({
 }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const resetState = useCallback(() => {
-    setIsRecording(false);
+    setIsStreaming(false);
     try {
       audioRecorderRef.current?.stop?.();
     } catch {}
@@ -31,7 +31,7 @@ const useAudioStreamer = ({
     return resetState;
   }, [resetState]);
 
-  const startRecording = useCallback(async () => {
+  const startStreaming = useCallback(async () => {
     const permissionResult = await requestRecordingPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert("Permission Error", "Audio recording permission is required");
@@ -54,16 +54,16 @@ const useAudioStreamer = ({
       onAudioReady(buffer);
     });
     audioRecorder.start();
-    setIsRecording(true);
+    setIsStreaming(true);
 
     audioContextRef.current = audioContext;
     audioRecorderRef.current = audioRecorder;
   }, [interval, onAudioReady, sampleRate]);
 
   return {
-    isRecording,
-    startRecording,
-    stopRecording: resetState,
+    isStreaming,
+    startStreaming,
+    stopStreaming: resetState,
   };
 };
 

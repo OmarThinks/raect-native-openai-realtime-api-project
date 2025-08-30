@@ -17,7 +17,11 @@ const RecordingTest = () => {
     ]);
   }, []);
 
-  const { isRecording, startRecording, stopRecording } = useAudioStreamer({
+  const {
+    isStreaming: isRecording,
+    startStreaming: startRecording,
+    stopStreaming: stopRecording,
+  } = useAudioStreamer({
     sampleRate: 24000,
     onAudioReady,
     interval: 250,

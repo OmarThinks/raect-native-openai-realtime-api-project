@@ -1,13 +1,13 @@
-import { View, Text } from "react-native";
-import React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { dummyBase64Audio24K } from "@/samples/dummyBase64Audio";
 import {
   combineBase64ArrayList,
   useOpenAiRealTime,
 } from "@/hooks/ai/useOpenAiRealTimeHook";
-import { useBase64PcmAudioPlayer } from "@/hooks/audio/useBase64PcmAudioPlayer";
 import { useAudioPlayer } from "@/hooks/audio/useAudioPlayer";
+import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
+import { dummyBase64Audio24K } from "@/samples/dummyBase64Audio";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Text, View } from "react-native";
+import { AudioBuffer } from "react-native-audio-api";
 
 const New = () => {
   const [messages, setMessages] = useState<object[]>([]);
@@ -78,7 +78,8 @@ const New = () => {
   console.log("before onAudioStreamerChunk: ", isAiResponseInProgress);
 
   const onAudioStreamerChunk = useCallback(
-    (chunk: string) => {
+    (audioBuffer: AudioBuffer) => {
+      const chunk = convertAudioBufferToBase64(audioBuffer);
       setChunks((prev) => [...prev, chunk]);
       if (
         isWebSocketConnected &&
@@ -101,7 +102,7 @@ const New = () => {
   const { isStreaming, startStreaming, stopStreaming } = useAudioStreamer({
     sampleRate: 16000, // e.g., 16kHz - // TODO : The documentation doesn't specify the exact requirements for this. It tried 16K and 24K. I think 16k is better.
     interval: 250, // emit every 250 milliseconds
-    onAudioChunk: onAudioStreamerChunk,
+    onAudioReady: onAudioStreamerChunk,
   });
 
   const playAudioRecorderChunks = useCallback(() => {
@@ -134,6 +135,33 @@ const New = () => {
       <Text>New</Text>
     </View>
   );
+};
+
+const convertAudioBufferToBase64 = (audioBuffer: AudioBuffer) => {
+  const float32Array = audioBuffer.getChannelData(0);
+
+  // Convert Float32Array to 16-bit PCM
+  const pcmData = new Int16Array(float32Array.length);
+  for (let i = 0; i < float32Array.length; i++) {
+    // Convert float32 (-1 to 1) to int16 (-32768 to 32767)
+    const sample = Math.max(-1, Math.min(1, float32Array[i]));
+    pcmData[i] = Math.round(sample * 32767);
+  }
+
+  // Convert to bytes
+  const bytes = new Uint8Array(pcmData.buffer);
+
+  // Convert to base64
+  let binary = "";
+  const chunkSize = 0x8000; // 32KB chunks to avoid call stack limits
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64String = btoa(binary);
+
+  return base64String;
 };
 
 export default New;

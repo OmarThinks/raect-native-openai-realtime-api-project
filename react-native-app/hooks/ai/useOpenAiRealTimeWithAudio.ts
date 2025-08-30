@@ -55,7 +55,11 @@ const useOpenAiRealTimeWithAudio = () => {
     [sendBase64AudioStringChunk]
   );
 
-  const { isRecording, startRecording, stopRecording } = useAudioStreamer({
+  const {
+    isStreaming: isRecording,
+    startStreaming: startRecording,
+    stopStreaming: stopRecording,
+  } = useAudioStreamer({
     sampleRate: 16000,
     interval: 250,
     onAudioReady,
