@@ -107,7 +107,7 @@ const New = () => {
   );
 
   const { isStreaming, startStreaming, stopStreaming } = useAudioStreamer({
-    sampleRate: 16000, // e.g., 16kHz - // TODO : The documentation doesn't specify the exact requirements for this. It tried 16K and 24K. I think 16k is better.
+    sampleRate: 24000, // e.g., 16kHz - // TODO : The documentation doesn't specify the exact requirements for this. It tried 16K and 24K. I think 16k is better.
     interval: 250, // emit every 250 milliseconds
     onAudioReady: onAudioStreamerChunk,
   });
@@ -171,7 +171,9 @@ const New = () => {
           <View>
             {isWebSocketConnected && <Button onPress={ping} title="Ping" />}
             {isWebSocketConnecting ? (
-              <Text style={{ color: "white" }}>Connecting...</Text>
+              <Text style={{ color: "white", fontSize: 32 }}>
+                Connecting...
+              </Text>
             ) : isWebSocketConnected ? (
               <Button onPress={disconnectSocket} title="disconnectSocket" />
             ) : (
@@ -188,16 +190,21 @@ const New = () => {
           <HR />
 
           <View>
-            <Text style={{ color: "white" }} className=" text-[30px] font-bold">
+            <Text
+              style={{ color: "white", fontSize: 32 }}
+              className=" text-[30px] font-bold"
+            >
               Transcription:
             </Text>
-            <Text style={{ color: "white" }}>{transcription}</Text>
+            <Text style={{ color: "white", fontSize: 32 }}>
+              {transcription}
+            </Text>
           </View>
 
           <HR />
 
           <View className=" flex-row flex items-center">
-            <Text style={{ color: "white" }}>
+            <Text style={{ color: "white", fontSize: 32 }}>
               Is audio Playing: {isAudioPlaying ? "Yes" : "No"}
             </Text>
 
@@ -225,7 +232,7 @@ const New = () => {
               <Button onPress={playAudioRecorderChunks} title="Play Stream" />
             )}
           </View>
-          <Text style={{ color: "white" }}>
+          <Text style={{ color: "white", fontSize: 32 }}>
             Is Streaming: {isStreaming ? "Yes" : "No"}
           </Text>
         </View>
