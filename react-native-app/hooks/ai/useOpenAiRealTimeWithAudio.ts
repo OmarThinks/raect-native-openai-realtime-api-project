@@ -7,12 +7,8 @@ import { useBase64PcmAudioPlayer } from "../audio/useBase64PcmAudioPlayer";
 import { useOpenAiRealTime } from "./useOpenAiRealTimeHook";
 
 const useOpenAiRealTimeWithAudio = () => {
-  const {
-    isAudioPlaying,
-    playPcmBase64Audio,
-    stopPlayingAudio,
-    isAudioPlayingSafe,
-  } = useBase64PcmAudioPlayer({ sampleRate: 24000, coolingDuration: 500 });
+  const { isAudioPlaying, playPcmBase64Audio, stopPlayingAudio } =
+    useBase64PcmAudioPlayer({ sampleRate: 24000, coolingDuration: 0 });
 
   const onSocketError = useCallback(() => {
     Alert.alert("Connection Error");
@@ -26,7 +22,8 @@ const useOpenAiRealTimeWithAudio = () => {
   );
 
   const isAiResponseInProgressRef = useRef(false);
-  const isAudioPlayingSafeRef = useRef(false);
+  const isAudioPlayingRef = useRef(false);
+  const isRecordingRef = useRef(false);
 
   const {
     connectWebSocket,
@@ -46,10 +43,7 @@ const useOpenAiRealTimeWithAudio = () => {
   const onAudioReady = useCallback(
     (audioBuffer: AudioBuffer) => {
       {
-        if (
-          !isAiResponseInProgressRef.current &&
-          !isAudioPlayingSafeRef.current
-        ) {
+        if (!isAiResponseInProgressRef.current && !isAudioPlayingRef.current) {
           sendBase64AudioStringChunk(convertAudioBufferToBase64(audioBuffer));
         }
       }
@@ -67,6 +61,8 @@ const useOpenAiRealTimeWithAudio = () => {
     disconnectSocket();
     stopRecording();
     stopPlayingAudio();
+    isAiResponseInProgressRef.current = false;
+    isAudioPlayingRef.current = false;
   }, [disconnectSocket, stopPlayingAudio, stopRecording]);
 
   const connect = useCallback(
@@ -78,7 +74,7 @@ const useOpenAiRealTimeWithAudio = () => {
 
   useEffect(() => {
     if (isWebSocketConnected) {
-      startRecording();
+      //startRecording();
     }
     if (!isWebSocketConnected) {
       resetState();
@@ -90,8 +86,49 @@ const useOpenAiRealTimeWithAudio = () => {
     isAiResponseInProgressRef.current = isAiResponseInProgress;
   }, [isAiResponseInProgress]);
   useEffect(() => {
-    isAudioPlayingSafeRef.current = isAudioPlayingSafe;
-  }, [isAudioPlayingSafe]);
+    isAudioPlayingRef.current = isAudioPlaying;
+  }, [isAudioPlaying]);
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
+
+  // To handle when to stop recording, and when to start recording
+
+  useEffect(() => {
+    if (isRecording) {
+      if (isAiResponseInProgress || isAudioPlaying) {
+        if (
+          isWebSocketConnected &&
+          !isWebSocketConnecting &&
+          isRecordingRef.current
+        ) {
+          console.log("stopping recording");
+          isRecordingRef.current = false;
+          stopRecording();
+        }
+      }
+    } else {
+      if (
+        !isAiResponseInProgress &&
+        !isAudioPlaying &&
+        !isWebSocketConnecting &&
+        isWebSocketConnected &&
+        !isRecordingRef.current
+      ) {
+        console.log("starting to record");
+        isRecordingRef.current = false;
+        startRecording();
+      }
+    }
+  }, [
+    isAiResponseInProgress,
+    isAudioPlaying,
+    isRecording,
+    isWebSocketConnected,
+    isWebSocketConnecting,
+    startRecording,
+    stopRecording,
+  ]);
 
   const isConnecting =
     isWebSocketConnecting || (isWebSocketConnected && !isInitialized);
@@ -100,7 +137,7 @@ const useOpenAiRealTimeWithAudio = () => {
     isInitialized &&
     isRecording &&
     !isAiResponseInProgress &&
-    !isAudioPlayingSafe;
+    !isAudioPlaying;
 
   console.log(
     "isConnected",

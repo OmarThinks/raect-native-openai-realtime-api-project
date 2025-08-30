@@ -215,7 +215,7 @@ const useOpenAiRealTime = ({
         isInitializedRef.current &&
         !isAiResponseInProgressRef.current
       ) {
-        console.log("sending message", [...base64String].slice(0, 50));
+        console.log("sending message", [...base64String].slice(0, 50).join(""));
         sendMessage({
           type: "input_audio_buffer.append",
           audio: base64String,
