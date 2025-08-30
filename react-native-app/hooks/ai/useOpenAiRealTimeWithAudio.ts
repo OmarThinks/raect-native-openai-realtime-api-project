@@ -7,8 +7,12 @@ import { useBase64PcmAudioPlayer } from "../audio/useBase64PcmAudioPlayer";
 import { useOpenAiRealTime } from "./useOpenAiRealTimeHook";
 
 const useOpenAiRealTimeWithAudio = () => {
-  const { isAudioPlaying, playPcmBase64Audio, stopPlayingAudio } =
-    useBase64PcmAudioPlayer({ sampleRate: 24000, coolingDuration: 0 });
+  const {
+    isAudioPlaying,
+    playPcmBase64Audio,
+    stopPlayingAudio,
+    isAudioPlayingSafe,
+  } = useBase64PcmAudioPlayer({ sampleRate: 24000, coolingDuration: 200 });
 
   const onSocketError = useCallback(() => {
     Alert.alert("Connection Error");
@@ -96,7 +100,7 @@ const useOpenAiRealTimeWithAudio = () => {
 
   useEffect(() => {
     if (isRecording) {
-      if (isAiResponseInProgress || isAudioPlaying) {
+      if (isAiResponseInProgress || isAudioPlayingSafe) {
         if (
           isWebSocketConnected &&
           !isWebSocketConnecting &&
@@ -110,7 +114,7 @@ const useOpenAiRealTimeWithAudio = () => {
     } else {
       if (
         !isAiResponseInProgress &&
-        !isAudioPlaying &&
+        !isAudioPlayingSafe &&
         !isWebSocketConnecting &&
         isWebSocketConnected &&
         !isRecordingRef.current
@@ -122,7 +126,7 @@ const useOpenAiRealTimeWithAudio = () => {
     }
   }, [
     isAiResponseInProgress,
-    isAudioPlaying,
+    isAudioPlayingSafe,
     isRecording,
     isWebSocketConnected,
     isWebSocketConnecting,

@@ -1,2 +1,2 @@
-- Why does AI respond to itself
-  - leaking messages happens between isAIResponding and isAudioPlaying
+- The leak is back
+- AI just stops responding suddenly
