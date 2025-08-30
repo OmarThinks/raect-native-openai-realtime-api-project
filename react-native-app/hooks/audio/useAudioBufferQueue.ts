@@ -23,8 +23,8 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     updateIsAudioPlaying(false);
     lastBufferIdRef.current = "";
     try {
-      audioBufferQueueRef.current?.stop?.();
-      audioBufferQueueRef.current?.clearBuffers?.();
+      //audioBufferQueueRef.current?.stop?.();
+      //audioBufferQueueRef.current?.clearBuffers?.();
     } catch {}
   }, [updateIsAudioPlaying]);
 
@@ -64,6 +64,7 @@ const useAudioBufferQueue = ({ sampleRate }: { sampleRate: number }) => {
     if (!isAudioPlayingRef.current) {
       //playAudio();
     }
+    return bufferId;
   }, []);
 
   return {

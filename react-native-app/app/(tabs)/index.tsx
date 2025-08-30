@@ -2,10 +2,6 @@ import useOpenAiRealTimeWithAudio from "@/hooks/ai/useOpenAiRealTimeWithAudio";
 import { requestRecordingPermissionsAsync } from "expo-audio";
 import { useCallback } from "react";
 import { Alert, Button, Text, View } from "react-native";
-import { dummyMessages } from "@/samples/dummyMessages";
-import { dummyBase64Audio16k } from "@/samples/dummyBase64Audio";
-import { useAudioBufferQueue } from "@/hooks/audio/useAudioBufferQueue";
-import { AudioContext } from "react-native-audio-api";
 
 const locaIpAddress = "http://192.168.8.103";
 
@@ -20,10 +16,7 @@ function HomeScreen() {
     isStreamingAudio,
     transcription,
     ping,
-    logMessages,
     isAudioPlaying,
-    playAudio,
-    logChunks,
   } = useOpenAiRealTimeWithAudio();
 
   const _connect = useCallback(async () => {
@@ -68,10 +61,6 @@ function HomeScreen() {
       <Text> Transcription: {transcription}</Text>
 
       {isListening && <Button title="Ping" onPress={ping} />}
-
-      <Button title="Log messages" onPress={logMessages} />
-      <Button title="playAudio" onPress={playAudio} />
-      <Button title="logChunks" onPress={logChunks} />
     </View>
   );
 }

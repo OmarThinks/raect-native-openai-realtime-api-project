@@ -51,8 +51,23 @@ export default function TabTwoScreen() {
           for (const chunck of dummyAudioChunks) {
             const audioBuffer =
               await audioContext.decodePCMInBase64Data(chunck);
-            enqueueAudioBufferQueue(audioBuffer);
+            const bufferId = enqueueAudioBufferQueue(audioBuffer);
+            console.log("enqueued buffer: ", bufferId);
           }
+
+          playAudio();
+        }}
+      />
+
+      <Button
+        title="Play single Chunck"
+        onPress={async () => {
+          const audioContext = new AudioContext({ sampleRate: 24000 });
+
+          const audioBuffer = await audioContext.decodePCMInBase64Data(
+            dummyAudioChunks[7]
+          );
+          enqueueAudioBufferQueue(audioBuffer);
 
           playAudio();
         }}
