@@ -15,8 +15,8 @@ const useOpenAiRealTime = ({
   onAudioResponseComplete: (base64Audio: string) => void;
   onUsageReport: (usage: object) => void;
   onReadyToReceiveAudio: () => void;
-  onSocketClose: () => void;
-  onSocketError?: (error: any) => void;
+  onSocketClose: (closeEvent: CloseEvent) => void;
+  onSocketError?: (error: Event) => void;
 }) => {
   const webSocketRef = useRef<null | WebSocket>(null);
   const [isWebSocketConnecting, setIsWebSocketConnecting] = useState(false);
@@ -59,11 +59,11 @@ const useOpenAiRealTime = ({
           setIsWebSocketConnected(true);
         });
 
-        ws.addEventListener("close", () => {
+        ws.addEventListener("close", (closeEvent) => {
           console.log("Disconnected from server.");
           setIsWebSocketConnected(false);
           resetHookState();
-          onSocketClose();
+          onSocketClose(closeEvent);
         });
 
         ws.addEventListener("error", (error) => {
