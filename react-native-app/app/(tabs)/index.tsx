@@ -3,7 +3,7 @@ import { requestRecordingPermissionsAsync } from "expo-audio";
 import { useCallback } from "react";
 import { Alert, Button, Text, View } from "react-native";
 
-const locaIpAddress = "http://192.168.8.103";
+const localIpAddress = "http://192.168.8.103";
 
 function HomeScreen() {
   const {
@@ -17,6 +17,7 @@ function HomeScreen() {
     transcription,
     ping,
     isAudioPlaying,
+    interrupt,
   } = useOpenAiRealTimeWithAudio();
 
   const logTranscription = useCallback(() => {
@@ -30,7 +31,7 @@ function HomeScreen() {
 
       if (granted) {
         console.log("getting backend response");
-        const tokenResponse = await fetch(`${locaIpAddress}:3000/session`);
+        const tokenResponse = await fetch(`${localIpAddress}:3000/session`);
         console.log("tokenResponse", tokenResponse);
         const data = await tokenResponse.json();
         const EPHEMERAL_KEY = data.client_secret.value;
@@ -67,6 +68,7 @@ function HomeScreen() {
       {isListening && <Button title="Ping" onPress={ping} />}
 
       <Button title="Log Transcription" onPress={logTranscription} />
+      {isAudioPlaying && <Button title="Interrupt" onPress={interrupt} />}
     </View>
   );
 }

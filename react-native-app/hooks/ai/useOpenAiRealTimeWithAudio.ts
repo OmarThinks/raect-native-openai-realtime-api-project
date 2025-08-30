@@ -140,6 +140,7 @@ const useOpenAiRealTimeWithAudio = () => {
     transcription,
     ping,
     isAudioPlaying,
+    interrupt: stopPlayingAudio,
   };
 };
 
