@@ -1,4 +1,4 @@
-import { dummyBase64Audio16k } from "@/samples/dummyBase64Audio";
+import { dummyBase64Audio24K } from "@/samples/dummyBase64Audio";
 import { useCallback, useEffect, useRef } from "react";
 import { Alert } from "react-native";
 import { AudioBuffer } from "react-native-audio-api";
@@ -73,7 +73,7 @@ const useOpenAiRealTimeWithAudio = () => {
   );
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
-    sampleRate: 16000,
+    sampleRate: 24000,
     interval: 250,
     onAudioReady,
   });
@@ -126,7 +126,7 @@ const useOpenAiRealTimeWithAudio = () => {
   );
 
   const ping = useCallback(() => {
-    sendBase64AudioStringChunk(dummyBase64Audio16k);
+    sendBase64AudioStringChunk(dummyBase64Audio24K);
   }, [sendBase64AudioStringChunk]);
 
   return {

@@ -74,7 +74,7 @@ const useOpenAiRealTime = ({
       }
 
       try {
-        const url = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17&token=${ephemeralKey}`;
+        const url = `wss://api.openai.com/v1/realtime?model=gpt-realtime&token=${ephemeralKey}`;
 
         console.log("url", url);
 
