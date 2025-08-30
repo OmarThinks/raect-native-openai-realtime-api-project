@@ -2,12 +2,16 @@ import {
   combineBase64ArrayList,
   useOpenAiRealTime,
 } from "@/hooks/ai/useOpenAiRealTimeHook";
-import { useAudioPlayer } from "@/hooks/audio/useAudioPlayer";
-import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
 import { dummyBase64Audio24K } from "@/samples/dummyBase64Audio";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Text, View } from "react-native";
-import { AudioBuffer } from "react-native-audio-api";
+import { Alert, Button, Text, View } from "react-native";
+import {
+  AudioBuffer,
+  AudioBufferSourceNode,
+  AudioContext,
+  AudioRecorder,
+} from "react-native-audio-api";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // TODO: Replace with your internal ip address
@@ -230,6 +234,128 @@ const New = () => {
 const HR = memo(function HR_() {
   return <View className=" self-stretch bg-white h-[2px] " />;
 });
+
+const useAudioPlayer = ({
+  onIsAudioPlayingUpdate,
+}: {
+  onIsAudioPlayingUpdate: (playing: boolean) => void;
+}) => {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioBufferSourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  const updateIsAudioPlaying = useCallback(
+    (newValue: boolean) => {
+      setIsAudioPlaying(newValue);
+      onIsAudioPlayingUpdate(newValue);
+    },
+    [onIsAudioPlayingUpdate]
+  );
+
+  const cleanUp = useCallback(() => {
+    updateIsAudioPlaying(false);
+    try {
+      audioBufferSourceNodeRef.current?.stop?.();
+    } catch {}
+    audioBufferSourceNodeRef.current = null;
+  }, [updateIsAudioPlaying]);
+
+  const playAudio = useCallback(
+    async ({
+      base64Text,
+      sampleRate,
+    }: {
+      sampleRate: number;
+      base64Text: string;
+    }) => {
+      const audioContext = new AudioContext({ sampleRate });
+      const audioBuffer = await audioContext.decodePCMInBase64Data(base64Text);
+
+      const audioBufferSourceNode = audioContext.createBufferSource();
+      audioBufferSourceNode.connect(audioContext.destination);
+
+      audioBufferSourceNode.buffer = audioBuffer;
+      updateIsAudioPlaying(true);
+      audioBufferSourceNode.onEnded = () => {
+        cleanUp();
+      };
+      audioBufferSourceNode.start();
+
+      audioBufferSourceNodeRef.current = audioBufferSourceNode;
+      audioContextRef.current = audioContext;
+    },
+    [cleanUp, updateIsAudioPlaying]
+  );
+  const stopPlayingAudio = useCallback(() => {
+    audioBufferSourceNodeRef.current?.stop?.();
+  }, []);
+
+  return {
+    isAudioPlaying,
+    playAudio,
+    stopPlayingAudio,
+  };
+};
+
+const useAudioStreamer = ({
+  sampleRate,
+  interval,
+  onAudioReady,
+}: {
+  sampleRate: number;
+  interval: number;
+  onAudioReady: (audioBuffer: AudioBuffer) => void;
+}) => {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioRecorderRef = useRef<AudioRecorder | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  const resetState = useCallback(() => {
+    setIsStreaming(false);
+    try {
+      audioRecorderRef.current?.stop?.();
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    return resetState;
+  }, [resetState]);
+
+  const startStreaming = useCallback(async () => {
+    const permissionResult = await requestRecordingPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert("Permission Error", "Audio recording permission is required");
+      return;
+    }
+
+    const audioContext = new AudioContext({ sampleRate });
+    const audioRecorder = new AudioRecorder({
+      sampleRate: sampleRate,
+      bufferLengthInSamples: (sampleRate * interval) / 1000,
+    });
+
+    const recorderAdapterNode = audioContext.createRecorderAdapter();
+
+    audioRecorder.connect(recorderAdapterNode);
+
+    audioRecorder.onAudioReady((event) => {
+      const { buffer } = event;
+
+      onAudioReady(buffer);
+    });
+    audioRecorder.start();
+    setIsStreaming(true);
+
+    audioContextRef.current = audioContext;
+    audioRecorderRef.current = audioRecorder;
+  }, [interval, onAudioReady, sampleRate]);
+
+  return {
+    isStreaming,
+    startStreaming,
+    stopStreaming: resetState,
+  };
+};
 
 const convertAudioBufferToBase64 = (audioBuffer: AudioBuffer) => {
   const float32Array = audioBuffer.getChannelData(0);
