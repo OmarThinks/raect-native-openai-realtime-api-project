@@ -19,6 +19,10 @@ function HomeScreen() {
     isAudioPlaying,
   } = useOpenAiRealTimeWithAudio();
 
+  const logTranscription = useCallback(() => {
+    console.log(transcription);
+  }, [transcription]);
+
   const _connect = useCallback(async () => {
     try {
       const { granted } = await requestRecordingPermissionsAsync();
@@ -61,6 +65,8 @@ function HomeScreen() {
       <Text> Transcription: {transcription}</Text>
 
       {isListening && <Button title="Ping" onPress={ping} />}
+
+      <Button title="Log Transcription" onPress={logTranscription} />
     </View>
   );
 }

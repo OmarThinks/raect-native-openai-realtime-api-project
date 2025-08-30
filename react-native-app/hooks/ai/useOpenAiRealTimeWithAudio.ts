@@ -42,19 +42,30 @@ const useOpenAiRealTimeWithAudio = () => {
   const onAudioReady = useCallback(
     (audioBuffer: AudioBuffer) => {
       {
-        return;
         if (!isAiResponseInProgressRef.current && !isAudioPlayingRef.current) {
-          const float32Array = audioBuffer.buffer.getChannelData(0);
+          const float32Array = audioBuffer.getChannelData(0);
 
-          const uint8Array = new Uint8Array(float32Array.buffer);
-          let binary = "";
-          const chunkSize = 0x8000; // 32KB chunks to avoid call stack overflow
-          for (let i = 0; i < uint8Array.length; i += chunkSize) {
-            const chunk = uint8Array.subarray(i, i + chunkSize);
-            binary += String.fromCharCode(...chunk);
+          // Convert Float32Array to 16-bit PCM
+          const pcmData = new Int16Array(float32Array.length);
+          for (let i = 0; i < float32Array.length; i++) {
+            // Convert float32 (-1 to 1) to int16 (-32768 to 32767)
+            const sample = Math.max(-1, Math.min(1, float32Array[i]));
+            pcmData[i] = Math.round(sample * 32767);
           }
-          const base64AudioData = btoa(binary);
-          sendBase64AudioStringChunk(base64AudioData);
+
+          // Convert to bytes
+          const bytes = new Uint8Array(pcmData.buffer);
+
+          // Convert to base64
+          let binary = "";
+          const chunkSize = 0x8000; // 32KB chunks to avoid call stack limits
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk));
+          }
+
+          const base64String = btoa(binary);
+          sendBase64AudioStringChunk(base64String);
         }
       }
     },
