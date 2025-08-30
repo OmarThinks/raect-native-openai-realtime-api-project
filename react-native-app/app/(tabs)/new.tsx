@@ -6,6 +6,8 @@ import {
   combineBase64ArrayList,
   useOpenAiRealTime,
 } from "@/hooks/ai/useOpenAiRealTimeHook";
+import { useBase64PcmAudioPlayer } from "@/hooks/audio/useBase64PcmAudioPlayer";
+import { useAudioPlayer } from "@/hooks/audio/useAudioPlayer";
 
 const New = () => {
   const [messages, setMessages] = useState<object[]>([]);

@@ -7,6 +7,8 @@ import { Alert, Button, Text, View } from "react-native";
 const localIpAddress = "http://192.168.8.103";
 
 function HomeScreen() {
+  return null;
+
   const {
     connect,
     disconnect,
