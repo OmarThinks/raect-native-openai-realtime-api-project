@@ -5,9 +5,10 @@ import {
 import { useAudioPlayer } from "@/hooks/audio/useAudioPlayer";
 import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
 import { dummyBase64Audio24K } from "@/samples/dummyBase64Audio";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import { Button, Text, View } from "react-native";
 import { AudioBuffer } from "react-native-audio-api";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const New = () => {
   const [messages, setMessages] = useState<object[]>([]);
@@ -131,11 +132,86 @@ const New = () => {
   }, [isWebSocketConnected, isInitialized]);
 
   return (
-    <View>
-      <Text>New</Text>
-    </View>
+    <SafeAreaView className=" self-stretch flex-1">
+      <View className=" self-stretch flex-1">
+        <View
+          className=" self-stretch flex-1"
+          style={{
+            backgroundColor: "black",
+            gap: 16,
+            display: "flex",
+            flexDirection: "column",
+            padding: 16,
+          }}
+        >
+          <View>
+            <Button
+              onPress={() => {
+                playAudio({
+                  base64Text: dummyBase64Audio24K,
+                  sampleRate: 24000,
+                });
+              }}
+              title="Play 24K string"
+            />
+          </View>
+          <View>
+            {isWebSocketConnected && <Button onPress={ping} title="Ping" />}
+            {isWebSocketConnecting ? (
+              <Text>Connecting...</Text>
+            ) : isWebSocketConnected ? (
+              <Button onPress={disconnectSocket} title="disconnectSocket" />
+            ) : (
+              <Button onPress={_connectWebSocket} title="connectWebSocket" />
+            )}
+
+            <Button
+              onPress={() => {
+                console.log("Log Messages:", messages);
+              }}
+              title="Log Messages"
+            />
+          </View>
+          <HR />
+
+          <View>
+            <Text className=" text-[30px] font-bold">Transcription:</Text>
+            <Text>{transcription}</Text>
+          </View>
+
+          <HR />
+
+          <View className=" flex-row flex items-center">
+            <Text>Is audio Playing: {isAudioPlaying ? "Yes" : "No"}</Text>
+
+            {isAudioPlaying && (
+              <Button onPress={stopPlayingAudio} title="Stop Playing" />
+            )}
+          </View>
+
+          <HR />
+
+          <View className=" flex flex-row items-center gap-2">
+            {!isStreaming && (
+              <Button onPress={startStreaming} title="Start Streaming" />
+            )}
+            {isStreaming && (
+              <Button onPress={stopStreaming} title="Stop Streaming" />
+            )}
+            {isStreaming && (
+              <Button onPress={playAudioRecorderChunks} title="Play Stream" />
+            )}
+          </View>
+          <Text>Is Streaming: {isStreaming ? "Yes" : "No"}</Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 };
+
+const HR = memo(function HR_() {
+  return <View className=" self-stretch bg-white h-[2px] " />;
+});
 
 const convertAudioBufferToBase64 = (audioBuffer: AudioBuffer) => {
   const float32Array = audioBuffer.getChannelData(0);
