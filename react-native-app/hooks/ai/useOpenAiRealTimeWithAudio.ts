@@ -50,29 +50,7 @@ const useOpenAiRealTimeWithAudio = () => {
           !isAiResponseInProgressRef.current &&
           !isAudioPlayingSafeRef.current
         ) {
-          const float32Array = audioBuffer.getChannelData(0);
-
-          // Convert Float32Array to 16-bit PCM
-          const pcmData = new Int16Array(float32Array.length);
-          for (let i = 0; i < float32Array.length; i++) {
-            // Convert float32 (-1 to 1) to int16 (-32768 to 32767)
-            const sample = Math.max(-1, Math.min(1, float32Array[i]));
-            pcmData[i] = Math.round(sample * 32767);
-          }
-
-          // Convert to bytes
-          const bytes = new Uint8Array(pcmData.buffer);
-
-          // Convert to base64
-          let binary = "";
-          const chunkSize = 0x8000; // 32KB chunks to avoid call stack limits
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            const chunk = bytes.subarray(i, i + chunkSize);
-            binary += String.fromCharCode.apply(null, Array.from(chunk));
-          }
-
-          const base64String = btoa(binary);
-          sendBase64AudioStringChunk(base64String);
+          sendBase64AudioStringChunk(convertAudioBufferToBase64(audioBuffer));
         }
       }
     },
@@ -151,4 +129,32 @@ const useOpenAiRealTimeWithAudio = () => {
   };
 };
 
+const convertAudioBufferToBase64 = (audioBuffer: AudioBuffer) => {
+  const float32Array = audioBuffer.getChannelData(0);
+
+  // Convert Float32Array to 16-bit PCM
+  const pcmData = new Int16Array(float32Array.length);
+  for (let i = 0; i < float32Array.length; i++) {
+    // Convert float32 (-1 to 1) to int16 (-32768 to 32767)
+    const sample = Math.max(-1, Math.min(1, float32Array[i]));
+    pcmData[i] = Math.round(sample * 32767);
+  }
+
+  // Convert to bytes
+  const bytes = new Uint8Array(pcmData.buffer);
+
+  // Convert to base64
+  let binary = "";
+  const chunkSize = 0x8000; // 32KB chunks to avoid call stack limits
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64String = btoa(binary);
+
+  return base64String;
+};
+
 export default useOpenAiRealTimeWithAudio;
+export { convertAudioBufferToBase64 };

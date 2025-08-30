@@ -48,6 +48,7 @@ const useBase64PcmAudioPlayer = ({
 
         audioBufferSourceNode.buffer = audioBuffer;
         setIsAudioPlaying(true);
+        setIsAudioPlayingSafe(true);
         audioBufferSourceNode.onEnded = () => {
           cleanUp();
         };
