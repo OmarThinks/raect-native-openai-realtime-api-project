@@ -1,11 +1,10 @@
-import { View, Text, Button } from "react-native";
-import React, { useCallback, useState } from "react";
-import { convertAudioBufferToBase64 } from "@/hooks/ai/useOpenAiRealTimeWithAudio";
-import { useAudioRecorder } from "expo-audio";
-import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
-import { AudioBuffer } from "react-native-audio-api";
 import { combineBase64ArrayList } from "@/hooks/ai/useOpenAiRealTimeHook";
 import { useBase64PcmAudioPlayer } from "@/hooks/audio/useBase64PcmAudioPlayer";
+import React, { useCallback, useState } from "react";
+import { Button, View } from "react-native";
+import { AudioBuffer } from "react-native-audio-api";
+import { convertAudioBufferToBase64 } from ".";
+import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
 
 const RecordingTest = () => {
   const [base64Strings, setBase64Strings] = useState<string[]>([]);

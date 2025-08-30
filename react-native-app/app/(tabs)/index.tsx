@@ -142,7 +142,10 @@ const New = () => {
   }, [isAiResponseInProgress]);
 
   return (
-    <SafeAreaView className=" self-stretch flex-1">
+    <SafeAreaView
+      className=" self-stretch flex-1"
+      edges={["top", "left", "right"]}
+    >
       <View className=" self-stretch flex-1">
         <View
           className=" self-stretch flex-1"
@@ -385,3 +388,9 @@ const convertAudioBufferToBase64 = (audioBuffer: AudioBuffer) => {
 };
 
 export default New;
+export {
+  convertAudioBufferToBase64,
+  combineBase64ArrayList,
+  useAudioPlayer,
+  useAudioStreamer,
+};
