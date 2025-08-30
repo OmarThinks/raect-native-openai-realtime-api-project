@@ -1,85 +1,261 @@
-import useOpenAiRealTimeWithAudio from "@/hooks/ai/useOpenAiRealTimeWithAudio";
-import { requestRecordingPermissionsAsync } from "expo-audio";
-import { useCallback } from "react";
-import { Alert, Button, Text, View } from "react-native";
+import {
+  combineBase64ArrayList,
+  useOpenAiRealTime,
+} from "@/hooks/ai/useOpenAiRealTimeHook";
+import { useAudioPlayer } from "@/hooks/audio/useAudioPlayer";
+import { useAudioStreamer } from "@/hooks/audio/useAudioStreamer";
+import { dummyBase64Audio24K } from "@/samples/dummyBase64Audio";
+import React, { memo, useCallback, useEffect, useRef, useState } from "react";
+import { Button, Text, View } from "react-native";
+import { AudioBuffer } from "react-native-audio-api";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // TODO: Replace with your internal ip address
 const localIpAddress = "http://192.168.8.103";
 
-function HomeScreen() {
-  return null;
+const New = () => {
+  const [messages, setMessages] = useState<object[]>([]);
+  const isAudioPlayingRef = useRef(false);
+  const isAiResponseInProgressRef = useRef(false);
+
+  const onIsAudioPlayingUpdate = useCallback((playing: boolean) => {
+    isAudioPlayingRef.current = playing;
+  }, []);
+
+  const { isAudioPlaying, playAudio, stopPlayingAudio } = useAudioPlayer({
+    onIsAudioPlayingUpdate,
+  });
+
+  const enqueueMessage = useCallback((message: object) => {
+    console.log("Got response chunk");
+    setMessages((prevMessages) => [...prevMessages, message]);
+  }, []);
+
+  const onAudioResponseComplete = useCallback(
+    (base64String: string) => {
+      console.log("Playing full response");
+      playAudio({
+        sampleRate: 24000,
+        base64Text: base64String,
+      });
+    },
+    [playAudio]
+  );
+
+  const onUsageReport = useCallback((usage: object) => {
+    console.log("Usage report:", usage);
+  }, []);
+
+  const onSocketClose = useCallback(() => {
+    console.log("onSocketClose");
+    //stopStreaming();
+    stopPlayingAudio();
+  }, [stopPlayingAudio]);
+
+  const onReadyToReceiveAudio = useCallback(() => {
+    //startStreaming();
+  }, []);
 
   const {
-    connect,
-    disconnect,
-    isAiResponding,
-    isConnected,
-    isConnecting,
-    isListening,
-    isStreamingAudio,
+    isWebSocketConnected,
+    connectWebSocket,
+    disconnectSocket,
+    isWebSocketConnecting,
+    sendBase64AudioStringChunk,
+    isAiResponseInProgress,
+    isInitialized,
     transcription,
-    ping,
-    isAudioPlaying,
-    interrupt,
-  } = useOpenAiRealTimeWithAudio();
+  } = useOpenAiRealTime({
+    instructions: "You are a helpful assistant.",
+    onMessageReceived: enqueueMessage,
+    onAudioResponseComplete,
+    onUsageReport,
+    onSocketClose,
+    onReadyToReceiveAudio,
+  });
 
-  const logTranscription = useCallback(() => {
-    console.log(transcription);
-  }, [transcription]);
+  const ping = useCallback(() => {
+    sendBase64AudioStringChunk(dummyBase64Audio24K);
+  }, [sendBase64AudioStringChunk]);
 
-  const _connect = useCallback(async () => {
-    try {
-      const { granted } = await requestRecordingPermissionsAsync();
-      console.log("granted", granted);
+  const [chunks, setChunks] = useState<string[]>([]);
 
-      if (granted) {
-        console.log("getting backend response");
-        const tokenResponse = await fetch(`${localIpAddress}:3000/session`);
-        console.log("tokenResponse", tokenResponse);
-        const data = await tokenResponse.json();
-        const EPHEMERAL_KEY = data.client_secret.value;
-        console.log("token", EPHEMERAL_KEY);
-        connect({ ephemeralToken: EPHEMERAL_KEY });
-      } else {
+  //console.log("before onAudioStreamerChunk: ", isAiResponseInProgress);
+
+  const onAudioStreamerChunk = useCallback(
+    (audioBuffer: AudioBuffer) => {
+      const chunk = convertAudioBufferToBase64(audioBuffer);
+      setChunks((prev) => [...prev, chunk]);
+
+      if (
+        isWebSocketConnected &&
+        isInitialized &&
+        !isAiResponseInProgressRef.current &&
+        !isAudioPlayingRef.current
+      ) {
+        console.log(
+          `Sending AUdio Chunk. isWebSocketConnected: ${isWebSocketConnected}, isInitialized: ${isInitialized}, isAiResponseInProgress: ${isAiResponseInProgressRef.current}, isAudioPlayingRef.current: ${isAudioPlayingRef.current}, ${chunk.slice(0, 50) + "..."}`
+        );
+        sendBase64AudioStringChunk(chunk);
       }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Something went wrong.");
+    },
+    [isInitialized, isWebSocketConnected, sendBase64AudioStringChunk]
+  );
+
+  const { isStreaming, startStreaming, stopStreaming } = useAudioStreamer({
+    sampleRate: 16000, // e.g., 16kHz - // TODO : The documentation doesn't specify the exact requirements for this. It tried 16K and 24K. I think 16k is better.
+    interval: 250, // emit every 250 milliseconds
+    onAudioReady: onAudioStreamerChunk,
+  });
+
+  const playAudioRecorderChunks = useCallback(() => {
+    const combined = combineBase64ArrayList(chunks);
+    playAudio({ base64Text: combined, sampleRate: 16000 });
+  }, [chunks, playAudio]);
+
+  const _connectWebSocket = useCallback(async () => {
+    const tokenResponse = await fetch(`${localIpAddress}:3000/session`);
+    const data = await tokenResponse.json();
+    const EPHEMERAL_KEY = data.client_secret.value;
+    connectWebSocket({ ephemeralKey: EPHEMERAL_KEY });
+  }, [connectWebSocket]);
+
+  useEffect(() => {
+    if (isWebSocketConnected) {
+      if (isInitialized) {
+        console.log("Starting audio streaming");
+        startStreaming();
+      }
+    } else {
+      console.log("Stopping audio streaming");
+      stopStreaming();
     }
-  }, [connect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWebSocketConnected, isInitialized]);
+
+  useEffect(() => {
+    isAiResponseInProgressRef.current = isAiResponseInProgress;
+  }, [isAiResponseInProgress]);
 
   return (
-    <View className="flex-1 items-stretch justify-center bg-white p-4">
-      {isConnecting ? (
-        <Text>Connecting...</Text>
-      ) : (
-        <Button
-          title={isConnected ? "Disconnect" : "Connect"}
-          onPress={isConnected ? disconnect : _connect}
-        />
-      )}
+    <SafeAreaView className=" self-stretch flex-1">
+      <View className=" self-stretch flex-1">
+        <View
+          className=" self-stretch flex-1"
+          style={{
+            backgroundColor: "black",
+            gap: 16,
+            display: "flex",
+            flexDirection: "column",
+            padding: 16,
+          }}
+        >
+          <View>
+            <Button
+              onPress={() => {
+                playAudio({
+                  base64Text: dummyBase64Audio24K,
+                  sampleRate: 24000,
+                });
+              }}
+              title="Play 24K string"
+            />
+          </View>
+          <View>
+            {isWebSocketConnected && <Button onPress={ping} title="Ping" />}
+            {isWebSocketConnecting ? (
+              <Text style={{ color: "white" }}>Connecting...</Text>
+            ) : isWebSocketConnected ? (
+              <Button onPress={disconnectSocket} title="disconnectSocket" />
+            ) : (
+              <Button onPress={_connectWebSocket} title="connectWebSocket" />
+            )}
 
-      <Text style={{ fontSize: 16 }}>Is Listening: {`${isListening}`}</Text>
+            <Button
+              onPress={() => {
+                console.log("Log Messages:", messages);
+              }}
+              title="Log Messages"
+            />
+          </View>
+          <HR />
 
-      <Text style={{ fontSize: 16 }}>
-        Is Microphone Active: {`${isStreamingAudio}`}
-      </Text>
+          <View>
+            <Text style={{ color: "white" }} className=" text-[30px] font-bold">
+              Transcription:
+            </Text>
+            <Text style={{ color: "white" }}>{transcription}</Text>
+          </View>
 
-      <Text style={{ fontSize: 16 }}>
-        isAiResponding: {`${isAiResponding}`}
-      </Text>
-      <Text style={{ fontSize: 16 }}>
-        isAudioPlaying: {`${isAudioPlaying}`}
-      </Text>
+          <HR />
 
-      <Text style={{ fontSize: 16 }}> Transcription: {transcription}</Text>
+          <View className=" flex-row flex items-center">
+            <Text style={{ color: "white" }}>
+              Is audio Playing: {isAudioPlaying ? "Yes" : "No"}
+            </Text>
 
-      {isListening && <Button title="Ping" onPress={ping} />}
+            {isAudioPlaying && (
+              <Button onPress={stopPlayingAudio} title="Stop Playing" />
+            )}
+          </View>
 
-      <Button title="Log Transcription" onPress={logTranscription} />
-      {isAudioPlaying && <Button title="Interrupt" onPress={interrupt} />}
-    </View>
+          <HR />
+
+          <View className=" flex flex-row items-center gap-2">
+            {!isStreaming && (
+              <Button
+                onPress={() => {
+                  setChunks([]);
+                  startStreaming();
+                }}
+                title="Start Streaming"
+              />
+            )}
+            {isStreaming && (
+              <Button onPress={stopStreaming} title="Stop Streaming" />
+            )}
+            {!isStreaming && chunks.length > 0 && (
+              <Button onPress={playAudioRecorderChunks} title="Play Stream" />
+            )}
+          </View>
+          <Text style={{ color: "white" }}>
+            Is Streaming: {isStreaming ? "Yes" : "No"}
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
-}
+};
 
-export default HomeScreen;
+const HR = memo(function HR_() {
+  return <View className=" self-stretch bg-white h-[2px] " />;
+});
+
+const convertAudioBufferToBase64 = (audioBuffer: AudioBuffer) => {
+  const float32Array = audioBuffer.getChannelData(0);
+
+  // Convert Float32Array to 16-bit PCM
+  const pcmData = new Int16Array(float32Array.length);
+  for (let i = 0; i < float32Array.length; i++) {
+    // Convert float32 (-1 to 1) to int16 (-32768 to 32767)
+    const sample = Math.max(-1, Math.min(1, float32Array[i]));
+    pcmData[i] = Math.round(sample * 32767);
+  }
+
+  // Convert to bytes
+  const bytes = new Uint8Array(pcmData.buffer);
+
+  // Convert to base64
+  let binary = "";
+  const chunkSize = 0x8000; // 32KB chunks to avoid call stack limits
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64String = btoa(binary);
+
+  return base64String;
+};
+
+export default New;
