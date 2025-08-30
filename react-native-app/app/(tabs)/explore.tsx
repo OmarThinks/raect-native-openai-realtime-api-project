@@ -4,6 +4,7 @@ import { useAudioBufferQueue } from "@/hooks/audio/useAudioBufferQueue";
 import { AudioContext } from "react-native-audio-api";
 import { dummyAudioChunks } from "@/samples/dummyAudioChuncks";
 import { combineBase64ArrayList } from "@/hooks/ai/useOpenAiRealTimeHook";
+import { useBase64PcmAudioPlayer } from "@/hooks/audio/useBase64PcmAudioPlayer";
 
 export default function TabTwoScreen() {
   const {
@@ -12,6 +13,8 @@ export default function TabTwoScreen() {
     playAudio,
     stopPlayingAudio,
   } = useAudioBufferQueue({ sampleRate: 24000 });
+
+  const { playPcmBase64Audio } = useBase64PcmAudioPlayer({ sampleRate: 24000 });
 
   return (
     <View className=" self-stretch flex-1 justify-center items-stretch">
@@ -33,7 +36,15 @@ export default function TabTwoScreen() {
       />
 
       <Button
-        title="Play dummy Chnucks"
+        title="Play Combined"
+        onPress={async () => {
+          const combined = combineBase64ArrayList(dummyAudioChunks);
+          playPcmBase64Audio({ base64String: combined });
+        }}
+      />
+
+      <Button
+        title="Play dummy Chuncks"
         onPress={async () => {
           const audioContext = new AudioContext({ sampleRate: 24000 });
 
