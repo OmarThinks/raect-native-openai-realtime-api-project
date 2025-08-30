@@ -1,19 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioBufferSourceNode, AudioContext } from "react-native-audio-api";
 
-const useBase64PcmAudioPlayer = ({ sampleRate }: { sampleRate: number }) => {
+const useBase64PcmAudioPlayer = ({
+  sampleRate,
+  coolingDuration,
+}: {
+  sampleRate: number;
+  coolingDuration: number;
+}) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioBufferSourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isAudioPlayingSafe, setIsAudioPlayingSafe] = useState(false);
 
   const cleanUp = useCallback(() => {
     setIsAudioPlaying(false);
+    setTimeout(() => {
+      setIsAudioPlayingSafe(false);
+    }, coolingDuration);
 
     try {
       audioBufferSourceNodeRef.current?.stop?.();
     } catch {}
     audioBufferSourceNodeRef.current = null;
-  }, []);
+  }, [coolingDuration]);
 
   useEffect(() => {
     cleanUp();
@@ -48,7 +58,12 @@ const useBase64PcmAudioPlayer = ({ sampleRate }: { sampleRate: number }) => {
     [cleanUp]
   );
 
-  return { isAudioPlaying, playPcmBase64Audio, stopPlayingAudio: cleanUp };
+  return {
+    isAudioPlaying,
+    playPcmBase64Audio,
+    stopPlayingAudio: cleanUp,
+    isAudioPlayingSafe,
+  };
 };
 
 export { useBase64PcmAudioPlayer };

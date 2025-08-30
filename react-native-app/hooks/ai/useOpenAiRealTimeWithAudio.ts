@@ -7,8 +7,12 @@ import { useBase64PcmAudioPlayer } from "../audio/useBase64PcmAudioPlayer";
 import { useOpenAiRealTime } from "./useOpenAiRealTimeHook";
 
 const useOpenAiRealTimeWithAudio = () => {
-  const { isAudioPlaying, playPcmBase64Audio, stopPlayingAudio } =
-    useBase64PcmAudioPlayer({ sampleRate: 24000 });
+  const {
+    isAudioPlaying,
+    playPcmBase64Audio,
+    stopPlayingAudio,
+    isAudioPlayingSafe,
+  } = useBase64PcmAudioPlayer({ sampleRate: 24000, coolingDuration: 500 });
 
   const onSocketError = useCallback(() => {
     Alert.alert("Connection Error");
@@ -22,7 +26,7 @@ const useOpenAiRealTimeWithAudio = () => {
   );
 
   const isAiResponseInProgressRef = useRef(false);
-  const isAudioPlayingRef = useRef(false);
+  const isAudioPlayingSafeRef = useRef(false);
 
   const {
     connectWebSocket,
@@ -42,7 +46,10 @@ const useOpenAiRealTimeWithAudio = () => {
   const onAudioReady = useCallback(
     (audioBuffer: AudioBuffer) => {
       {
-        if (!isAiResponseInProgressRef.current && !isAudioPlayingRef.current) {
+        if (
+          !isAiResponseInProgressRef.current &&
+          !isAudioPlayingSafeRef.current
+        ) {
           const float32Array = audioBuffer.getChannelData(0);
 
           // Convert Float32Array to 16-bit PCM
@@ -73,7 +80,7 @@ const useOpenAiRealTimeWithAudio = () => {
   );
 
   const { isRecording, startRecording, stopRecording } = useAudioStreamer({
-    sampleRate: 24000,
+    sampleRate: 16000,
     interval: 250,
     onAudioReady,
   });
@@ -105,8 +112,8 @@ const useOpenAiRealTimeWithAudio = () => {
     isAiResponseInProgressRef.current = isAiResponseInProgress;
   }, [isAiResponseInProgress]);
   useEffect(() => {
-    isAudioPlayingRef.current = isAudioPlaying;
-  }, [isAudioPlaying]);
+    isAudioPlayingSafeRef.current = isAudioPlayingSafe;
+  }, [isAudioPlayingSafe]);
 
   const isConnecting =
     isWebSocketConnecting || (isWebSocketConnected && !isInitialized);
@@ -115,7 +122,7 @@ const useOpenAiRealTimeWithAudio = () => {
     isInitialized &&
     isRecording &&
     !isAiResponseInProgress &&
-    !isAudioPlaying;
+    !isAudioPlayingSafe;
 
   console.log(
     "isConnected",

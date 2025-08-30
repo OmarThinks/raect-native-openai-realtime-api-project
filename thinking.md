@@ -1,4 +1,2 @@
-- ping
-
-- handle interrupt
-- shouldn't send base64 text handle everything internally?
+- Why does AI respond to itself
+  - leaking messages happens between isAIResponding and isAudioPlaying

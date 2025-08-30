@@ -3,6 +3,7 @@ import { requestRecordingPermissionsAsync } from "expo-audio";
 import { useCallback } from "react";
 import { Alert, Button, Text, View } from "react-native";
 
+// TODO: Replace with your internal ip address
 const localIpAddress = "http://192.168.8.103";
 
 function HomeScreen() {
@@ -56,14 +57,20 @@ function HomeScreen() {
         />
       )}
 
-      <Text>Is Listening: {`${isListening}`}</Text>
+      <Text style={{ fontSize: 16 }}>Is Listening: {`${isListening}`}</Text>
 
-      <Text>Is Microphone Active: {`${isStreamingAudio}`}</Text>
+      <Text style={{ fontSize: 16 }}>
+        Is Microphone Active: {`${isStreamingAudio}`}
+      </Text>
 
-      <Text>isAiResponding: {`${isAiResponding}`}</Text>
-      <Text>isAudioPlaying: {`${isAudioPlaying}`}</Text>
+      <Text style={{ fontSize: 16 }}>
+        isAiResponding: {`${isAiResponding}`}
+      </Text>
+      <Text style={{ fontSize: 16 }}>
+        isAudioPlaying: {`${isAudioPlaying}`}
+      </Text>
 
-      <Text> Transcription: {transcription}</Text>
+      <Text style={{ fontSize: 16 }}> Transcription: {transcription}</Text>
 
       {isListening && <Button title="Ping" onPress={ping} />}
 
